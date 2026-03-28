@@ -1,4 +1,5 @@
 
+
 /*
 
 ABC SEGMENTATION :
@@ -56,10 +57,11 @@ Sales_Agg as (
 
 -- create Temp table for Sales and margin Ranking
 -- company + subclass + brand granularity
+
 select Company, SubClass, Brand, ItemID, Description, 
-		DENSE_RANK() over (partition by Company, SubClass
+		RANK() over (partition by Company, SubClass, Brand
 			order by Company, SubClass, Brand, sum(Sales) desc) as SalesRank,
-		DENSE_RANK() over (partition by Company, SubClass
+		RANK() over (partition by Company, SubClass, Brand
 			order by Company, SubClass, Brand, sum(Margin) desc) as MarginRank,
 		CAST(NULL AS decimal(10,2)) as FinalBase,
 		sum(QtySold) QtySold, sum(Sales) Sales, sum(Margin) Margin
@@ -74,7 +76,7 @@ set FinalBase = ((SalesRank * 0.40) + (MarginRank * 0.60));
 -- Final Ranking
 with SalesRank_Agg as (
 	select *,
-	DENSE_RANK() over(partition by Company, SubClass, Brand
+	RANK() over(partition by Company, SubClass, Brand
 			order by FinalBase asc) as FinalRank
 	from #RankingStage1
 	)
