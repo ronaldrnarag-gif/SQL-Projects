@@ -1,9 +1,9 @@
 
 
 /*
-FIFO Provision simulation
-extract FIFO standard calculation as per Dynamics, compare against standard calculation from database
-ronaldn/20260327
+Project 			:FIFO Provision simulation
+Calculation Logic 	:extract FIFO standard calculation as per Dynamics, compare against standard calculation from database
+Created				:ronaldn/20260327
 */
 
 
