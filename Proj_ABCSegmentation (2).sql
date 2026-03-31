@@ -80,7 +80,7 @@ select *,
 	(
 	case 
 		when Pct_Total <= 0.4 then 'A'
-		when Pct_Total <= 0.7 then 'B'
+		when Pct_Total <= 0.8 then 'B'
 		else 'C' end
 	) as ABC
 from 
