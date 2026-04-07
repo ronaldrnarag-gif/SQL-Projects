@@ -6,7 +6,7 @@ Purpose     :   FIFO Stock Bucketing and Provisioning.
                 This file is needed to fulfill Weekly FIFO Report Requested by Karima and Team.
 Logic       :   Creates list of all sku's in vw_stockageing 
                 plus added column for the Categorization needed to run the provision calculations correctly.
-Created     :   ronaldn/20260327	xx				
+Created     :   ronaldn/20260327					
 */					
 					
 					
@@ -52,7 +52,7 @@ VALUES
 					
 -- Data Extraction				
 drop table if exists #DataExtract					
-select a.Company, a.Sku, a.Description,	a.Dept2,	a.Department,	a.Subdepartment,	a.Class,	a.Subclass, a.Brand,
+select a.Company, a.Sku, a.Description,	a.Dept2,	a.Department,	a.Subdepartment,	a.Class,	a.Subclass, a.Brand, a.ABCFlag, a.PopGradeNo, 
     a.Stockbracketdescription, a.Stockbracket,					
 	sum(a.total_stk_qty) QtyOH, sum(a.total_stk$)	Stock, sum(a.Total_Prov$) Provision,			
     case					
@@ -73,7 +73,7 @@ left join @exclusions b
     on a.SubClass = b.[SubClass Exclusions]					
 where a.Stype in ('normal purchase','purchase foreign')					
 	and a.Department <> 'services'				
-group by a.Company, a.Sku, a.Description,	a.Dept2,	a.Department,	a.Subdepartment,	a.Class,	a.Subclass,  a.Brand,
+group by a.Company, a.Sku, a.Description,	a.Dept2,	a.Department,	a.Subdepartment,	a.Class,	a.Subclass,  a.Brand, a.ABCFlag, a.PopGradeNo, 
     a.stockbracketdescription, a.stockbracket					
 having sum(a.total_stk_qty) <>0 and sum(a.total_stk$) <> 0;					
 					
