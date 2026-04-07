@@ -6,7 +6,7 @@ Purpose     :   FIFO Stock Bucketing and Provisioning.
                 This file is needed to fulfill Weekly FIFO Report Requested by Karima and Team.
 Logic       :   Creates list of all sku's in vw_stockageing 
                 plus added column for the Categorization needed to run the provision calculations correctly.
-Created     :   ronaldn/20260327					
+Created     :   ronaldn/20260327	xx				
 */					
 					
 					
