@@ -75,7 +75,7 @@ where a.Stype in ('normal purchase','purchase foreign')
 	and a.Department <> 'services'				
 group by a.Company, a.Sku, a.Description,	a.Dept2,	a.Department,	a.Subdepartment,	a.Class,	a.Subclass,  a.Brand, a.ABCFlag, a.PopGradeNo, 
     a.stockbracketdescription, a.stockbracket					
-having sum(a.total_stk_qty) <>0 and sum(a.total_stk$) <> 0;					
+--having sum(a.total_stk_qty) <>0 and sum(a.total_stk$) <> 0;					
 					
 Select * from #DataExtract					
 					
