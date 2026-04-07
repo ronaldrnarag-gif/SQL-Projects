@@ -52,7 +52,7 @@ VALUES
 					
 -- Data Extraction				
 drop table if exists #DataExtract					
-select a.Company, a.Sku, a.Description,	a.Dept2,	a.Department,	a.Subdepartment,	a.Class,	a.Subclass,
+select a.Company, a.Sku, a.Description,	a.Dept2,	a.Department,	a.Subdepartment,	a.Class,	a.Subclass, a.Brand,
     a.Stockbracketdescription, a.Stockbracket,					
 	sum(a.total_stk_qty) QtyOH, sum(a.total_stk$)	Stock, sum(a.Total_Prov$) Provision,			
     case					
@@ -73,7 +73,7 @@ left join @exclusions b
     on a.SubClass = b.[SubClass Exclusions]					
 where a.Stype in ('normal purchase','purchase foreign')					
 	and a.Department <> 'services'				
-group by a.Company, a.Sku, a.Description,	a.Dept2,	a.Department,	a.Subdepartment,	a.Class,	a.Subclass,
+group by a.Company, a.Sku, a.Description,	a.Dept2,	a.Department,	a.Subdepartment,	a.Class,	a.Subclass,  a.Brand,
     a.stockbracketdescription, a.stockbracket					
 having sum(a.total_stk_qty) <>0 and sum(a.total_stk$) <> 0;					
 					
