@@ -1,80 +1,76 @@
-
-
 /*
+Title	:	ABC SEGMENTATION 
+Purpose	:	ABC Segmentation for Inventory Management Metric
+Logic	:
 
-ABC SEGMENTATION :
+	Rank Sku's existing in 
+	Last 90D Sales and Margin Data.
 
-	Partition Level : 
-	company + subclass + 	brand
+	Rankings : 
+		1- Sales based on value;
+		2- margin based on value; then 
+		3- Final Base based on this calculation = sum(Sales Rank * 40%, margin rank * 60%)
 
-	Last 90D Sales and Margin
-
-	Exclusions :
-	- Newness (FRD <= 90D)
-	- No Sales for the Last 90D
-
-	Final Rank Matrix
-	- Sales 40% and margin 60%
-
+	next steps :
+	- create a view out of this script, left join with itemmaster to import ABC Flag column.
+	- anything null after applying ABC from below script will be replaed by the following: 
+		a. FRD <= dateadd(day,-90,getdate()-1)
+		b. 'No Sales' = left over nulls  
+Created	:	ronaldn/20260412
 */
 
+-- Temp Table (Stage 1) for the last 90D sales
 
--- Variable Declarations
-declare @startdate as date, @enddate as date;
-set @startdate = DATEADD(day,-90,getdate()-1);
-set @enddate = getdate()-1;
+Drop table if exists #TempStg
+Create table #TempStg  
+(
+	Company		varchar(10), 
+	SubClass	nvarchar(50), 
+	Brand		nvarchar(25), 
+	Itemid		varchar(10), 
+	Description	nvarchar(100),
+	QtySold		int not null default 0,
+	Sales		decimal(19,4) not null default 0,
+	Margin		decimal(19,4) not null default 0,
+		)
 
--- CTE Stock
-with Stock_Agg as (
-	select Company, Sku, FRDEntity, 
-		sum(total_stk_qty) QtyOH, sum(total_stk$) Stock, sum(total_prov$) Provision
-	from VW_StockAgeing
-group by Company, Sku, FRDEntity
-	),
-
--- CTE last 90D sales, exclude New Items
-Sales_Agg as (
+Insert Into #TempStg (Company,SubClass,Brand,Itemid,Description,QtySold,Sales,Margin)
 	select Company, SubClass, Brand, Itemid, Description,
-		sum(qty) QtySold, sum(sales$) sales, sum(margin$) margin
-	from salesconsol a
-	where date between @startdate and @enddate
+		sum(qty) QtySold, sum(sales$) Sales, sum(margin$) Margin
+	from salesconsol 
+	where date between DATEADD(day,-90,getdate()-1) and GETDATE()-1
 		and stype in ('normal purchase','purchase foreign','consignment')
-		and exists 
-			(
-			select 1
-			from Stock_Agg b
-			where b.Company = a.Company and b.Sku = a.ItemId
-			and b.FRDEntity <= @startdate
-			)
 	group by Company, SubClass, Brand, Itemid, Description
-	)
-
--- create Temp table for Sales and margin Ranking
+		
+-- create Temp table for Sales and margin Ranking 
 -- company + subclass + brand granularity
 
-select Company, SubClass, Brand, ItemID, Description, 
+drop table if exists #TempStg1
+Select Company, SubClass, Brand, ItemID, Description, 
 		RANK() over (partition by Company, SubClass, Brand
-			order by Company, SubClass, Brand, sum(Sales) desc) as SalesRank,
+			order by sum(Sales) desc) as SalesRank,
 		RANK() over (partition by Company, SubClass, Brand
-			order by Company, SubClass, Brand, sum(Margin) desc) as MarginRank,
-		CAST(NULL AS decimal(10,2)) as FinalBase,
-		sum(QtySold) QtySold, sum(Sales) Sales, sum(Margin) Margin
-into #RankingStage1
-from Sales_Agg
+			order by sum(Margin) desc) as MarginRank,
+		CAST(NULL AS decimal(19,4)) as FinalBase,
+		sum(QtySold) QtySold, 
+		sum(Sales) Sales, 
+		sum(Margin) Margin
+Into #TempStg1
+from #TempStg
 group by Company, SubClass, Brand, ItemID, Description ;
 
 -- Update weighted Score
-update #RankingStage1
+update #TempStg1
 set FinalBase = ((SalesRank * 0.40) + (MarginRank * 0.60));
 
 -- Final Ranking
-with SalesRank_Agg as (
-	select *,
-	RANK() over(partition by Company, SubClass, Brand
-			order by FinalBase asc) as FinalRank
-	from #RankingStage1
-	)
-
+drop table if exists #TempStg2
+select *,
+RANK() over(partition by Company, SubClass, Brand
+		order by FinalBase asc) as FinalRank
+into #TempStg2
+from #TempStg1
+	
 -- ABC % Base
 select *,
 	(
@@ -96,7 +92,7 @@ from
 		select *,
 			max(finalrank) over(partition by Company, Subclass, Brand
 				order by Company, Subclass) as MaxRank
-		from SalesRank_Agg
+		from #TempStg2
 		where Company = 'bah') t
 		) r ;
 
