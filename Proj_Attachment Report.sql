@@ -87,7 +87,7 @@ SELECT
     b.[type_code] AS Type_Code_A,	
     CASE 	
         WHEN c.[type_code] = 'P' AND b.[type_code] = 'A' THEN '1- Attachment Transaction'	
-        WHEN c.[type_code] = 'P' AND b.[type_code] IS NULL THEN '2- MISSED opportunity'	
+        WHEN c.[type_code] = 'P' AND (b.[type_code] IS NULL or b.[type_code] = '') THEN '2- MISSED opportunity'	
         WHEN c.[type_code] IS NULL AND b.[type_code] = 'A' THEN '3- Attachment Only'	
         ELSE 'Non Attachment Trans'	
     END AS FLAG,	
