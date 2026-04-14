@@ -28,25 +28,36 @@ Create table #TempStg
 	SubClass	nvarchar(50), 
 	Brand		nvarchar(25), 
 	Itemid		varchar(10), 
-	Description	nvarchar(100),
 	QtySold		int not null default 0,
 	Sales		decimal(19,4) not null default 0,
 	Margin		decimal(19,4) not null default 0,
 		)
 
-Insert Into #TempStg (Company,SubClass,Brand,Itemid,Description,QtySold,Sales,Margin)
-	select Company, SubClass, Brand, Itemid, Description,
+; with Stock_Agg as (
+	select Company, sku, min(FRDEntity) FRDEntity
+	from VW_StockAgeing
+	where FRDEntity >= dateadd(day,-90,getdate()-1)
+	group by Company, sku
+)
+
+Insert Into #TempStg (Company,SubClass,Brand,Itemid,QtySold,Sales,Margin)
+	select Company, SubClass, Brand, Itemid,
 		sum(qty) QtySold, sum(sales$) Sales, sum(margin$) Margin
-	from salesconsol 
+	from salesconsol a
 	where date between DATEADD(day,-90,getdate()-1) and GETDATE()-1
 		and stype in ('normal purchase','purchase foreign','consignment')
-	group by Company, SubClass, Brand, Itemid, Description
+		and not exists (
+			select 1
+			from Stock_Agg b
+			where a.Company=b.Company and a.ItemId=b.Sku
+			)
+	group by Company, SubClass, Brand, Itemid
 		
 -- create Temp table for Sales and margin Ranking 
 -- company + subclass + brand granularity
 
 drop table if exists #TempStg1
-Select Company, SubClass, Brand, ItemID, Description, 
+Select Company, SubClass, Brand, ItemID,  
 		RANK() over (partition by Company, SubClass, Brand
 			order by sum(Sales) desc) as SalesRank,
 		RANK() over (partition by Company, SubClass, Brand
@@ -57,7 +68,7 @@ Select Company, SubClass, Brand, ItemID, Description,
 		sum(Margin) Margin
 Into #TempStg1
 from #TempStg
-group by Company, SubClass, Brand, ItemID, Description ;
+group by Company, SubClass, Brand, ItemID ;
 
 -- Update weighted Score
 update #TempStg1
@@ -93,7 +104,9 @@ from
 			max(finalrank) over(partition by Company, Subclass, Brand
 				order by Company, Subclass) as MaxRank
 		from #TempStg2
-		where Company = 'bah') t
+		where Company = 'qat'
+		and SubClass = 'iphone'
+		and Brand = 'appl') t
 		) r ;
 
 GO
