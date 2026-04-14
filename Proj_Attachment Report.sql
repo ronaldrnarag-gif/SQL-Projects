@@ -21,7 +21,9 @@ Logic   :
                 a. WHEN c.[type_code] = 'P' AND b.[type_code] = 'A'    THEN '1- Attachment Transaction'	
                 b. WHEN c.[type_code] = 'P' AND b.[type_code] IS NULL  THEN '2- MISSED opportunity'	
                 c. WHEN c.[type_code] IS NULL AND b.[type_code] = 'A'  THEN '3- Attachment Only'
-
+File Dependencies :
+            1- Fact_TransConsol
+            2- Dim_AttachmentPrincipal
 Created :   ronaldn/mar2026
 */
 
@@ -108,6 +110,7 @@ GROUP BY
     a.FinYear1,a.Date,a.Month,a.WeekNo,a.Company,a.StoreNo,a.StoreName,a.ItemId,
    a.Description,a.Dept2,a.Department,a.SubDepartment,a.Class,a.SubClass,a.Brand,a.TransID,
    a.Supplier,a.SupplierName, a.[GROUP], a.[TYPE_CODE],c.[type_code], b.[type_code],d.StoreType ;
+
 
 
 GO
