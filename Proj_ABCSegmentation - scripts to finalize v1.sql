@@ -91,3 +91,27 @@
 Step 7: BUILD ABC in Dim_ItemMaster, 
         logic is to left join with 'View_ABCFlag', then run 'Newness' based on newly added FRD Column, then rest to flag as 'No Sales'
 
+        
+    /* update first 3 variables before running */
+    declare @FinYear varchar(10)    = '2026-27';
+    declare @Month varchar(10)      = 'Mar';
+    declare @Endd date              = '2026-03-31';
+    declare @Startd date = DATEADD(DAY, -90, @Endd) ;
+
+    UPDATE a
+    SET a.ABCFlag = 
+        CASE  
+            WHEN a.FRDEntity > @Startd
+                THEN 'Newness'  -- 1. Newness
+            WHEN b.ABC IS NOT NULL 
+                and a.FRDEntity < @Startd
+                THEN b.ABC      -- 2. ABC from view
+            ELSE 'NoSale'       -- 3. No Sale
+        END
+    FROM Fact_StockProgressionSku a
+    LEFT JOIN View_BI_ABCFlags b
+        ON a.Company = b.Company
+       AND a.Sku = b.ItemID
+    WHERE a.FinYear1 = @FinYear and a.Month=@Month;
+ 
+
