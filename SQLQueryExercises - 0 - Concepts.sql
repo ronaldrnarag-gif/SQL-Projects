@@ -1,4 +1,6 @@
-/* Review 
+/*  
+
+** Concepts to master
 
 SQL-Playbook/
    window-functions.sql
@@ -20,27 +22,24 @@ SQL-Playbook/
 -- Order by 1, or Select 1
 -- ; and GO
 
-***/
+** New Concepts to Master
 
-/*New Concepts
 -- Date/time manipulation — DATE_TRUNC, DATEDIFF, DATEADD, EXTRACT
 -- Grouping_ID
--- Any Operator
+-- ok - Any Operator
 -- Execution Plans
--- Index Strategy
+-- Indexing and Index Strategy
 -- Apply Operators
 -- SCD Patterns
 -- Metadata SQL
--- Fabric SQL
+-- ok - Fabric SQL
 -- Transactions & DML (INSERT, UPDATE, DELETE, MERGE (upserts))
 -- Type casting — CAST, TRY_CAST, implicit vs explicit conversion, handling nulls with COALESCE and NULLIF.
--- String functions — CONCAT, SPLIT_PART, REGEXP, TRIM, UPPER/LOWER, SUBSTRING.
-***/
+-- ok - String functions — CONCAT, SPLIT_PART, REGEXP, TRIM, UPPER/LOWER, SUBSTRING.
+-- Error Handling
 
+** Header Comment Structure
 
--- Header Comment
-
-/*
 Purpose:
     ABC Segmentation based on 90-day sales and margin
 
@@ -51,4 +50,5 @@ Logic:
 
 Author: Ronald
 Created: 2026-03-19
+
 */
