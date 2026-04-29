@@ -1,42 +1,33 @@
-USE [AxDW]
-GO
-
-/****** Object:  StoredProcedure [dbo].[Get_BSTEcommPhy]    Script Date: 4/27/2026 4:56:58 PM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-
-
----Stock details - Best sellers for ecomm and physical stores---
-
-
-CREATE procedure [dbo].[Get_BSTEcommPhy]
-as 
-Begin
-	
-Truncate TABLE Dim_BSTEcommPhy
+/*
+Purpose			:	Bestseller items on Ecomm and Physical Stores
+					(Fulfill requirement from Ecommerce team, Noreen)
+Logic			:	1- create sales database to apply bestseller logic on which involves last 180 days period
+					2- create unique product categorization at which level we will run the sales ranking on
+					3- create view to run sales ranking on ecomm stores (granularity : company, category), take only top 80% 
+					4- create view to run sales ranking on Physical stores (granularity : company, category), take only top 80%
+					5- combined 3 and 4 results into 1 via UNION ALL
+Dependencies	:	SalesConsol
+Created			:	ronaldn/20260427
+*/
 
 Drop table if exists #L180DSales
-
+GO
 
 -- 1. Build Last 180 Day sales Database
-select Company, StoreNo, ItemId, Description, Dept2, Department, Subdepartment, Class, Subclass, Brand, 
-	sum(qty) Qty, SUM(Sales$) Sales, sum(Margin$) Margin, 
-	case when StoreNo in ('333','444','666','777') then 'Ecom' else 'Phy' END as StoreType,
-	cast('' as nvarchar (50)) as Category, '' as BST_ALL, '' as BST_ECOM, '' as BST_PHY
-into #L180DSales
-from SalesConsol
-where Date between dateadd(day,-180,cast(getdate()-1 as date)) and CAST(GETDATE() - 1 AS DATE)
-and Stype in ('Normal Purchase','Purchase Foreign')
-and Company in ('omn','bah','uae','kat','qat')
-group by Company, StoreNo, ItemId, Description, Dept2, Department, Subdepartment, Class, Subclass, Brand
+	select Company, StoreNo, ItemId, Description, Dept2, Department, Subdepartment, Class, Subclass, Brand, 
+		sum(qty) Qty, SUM(Sales$) Sales, sum(Margin$) Margin, 
+		case when StoreNo in ('333','444','666','777') then 'Ecom' else 'Phy' END as StoreType,
+		cast('' as nvarchar (50)) as Category, '' as BST_ALL, '' as BST_ECOM, '' as BST_PHY
+	into #L180DSales
+	from SalesConsol
+	where Date between dateadd(day,-180,cast(getdate()-1 as date)) and CAST(GETDATE() - 1 AS DATE)
+	and Stype in ('Normal Purchase','Purchase Foreign')
+	and Company in ('omn','bah','uae','kat','qat')
+	group by Company, StoreNo, ItemId, Description, Dept2, Department, Subdepartment, Class, Subclass, Brand
 
 -- 2. Update BST Product Categorization
-update a
-set Category =
+	update a
+	set Category =
        Case
 		   when Class = 'MOBILE PHONES' then '1-MOBILE PHONES'
 		   when Class = 'MOBILE ACCESSORIES' then '2-MOBILE ACCESSORIES'
@@ -72,25 +63,25 @@ set Category =
 				  and SubDepartment not in ('VINYL','TURNTABLES & AUDIO','CDS')
 						 then '24-Other Music'
 		END
-from #L180DSales a
+	from #L180DSales a
 
 -- 3. Ecomm Top 80 %
-; WITH Ecomm_BST as (
-	select *, CummulativeSales/nullif(TotalSales,0) PctTotal, 'Ecm' as Storetype
-	from (
-		select Company, Category, ItemId
-			,sum(Sales) Sales
-			,sum(sum(sales)) over(partition by Company, Category order by Company, Category, sum(sales) desc rows between unbounded preceding and current row) as CummulativeSales
-			,sum(sum(sales)) over(partition by company, category) as TotalSales 
-			,ROW_NUMBER() over(partition by company, category order by Company, Category, sum(sales) desc) Rank
-		from #L180DSales
-		where StoreType = 'Ecom'
-		group by Company, Category, ItemId) t
-	where CummulativeSales/nullif(TotalSales,0) <= 0.8
+	;WITH Ecomm_BST as (
+		select *, CummulativeSales/nullif(TotalSales,0) PctTotal, 'Ecm' as Storetype
+		from (
+			select Company, Category, ItemId
+				,sum(Sales) Sales
+				,sum(sum(sales)) over(partition by Company, Category order by Company, Category, sum(sales) desc rows between unbounded preceding and current row) as CummulativeSales
+				,sum(sum(sales)) over(partition by company, category) as TotalSales 
+				,ROW_NUMBER() over(partition by company, category order by Company, Category, sum(sales) desc) Rank
+			from #L180DSales
+			where StoreType = 'Ecom'
+			group by Company, Category, ItemId) t
+		where CummulativeSales/nullif(TotalSales,0) <= 0.8
 	),
 
 -- 4. Physical Stores Top 80 %
-Phy_BST as (
+	Phy_BST as (
 	select *, CummulativeSales/nullif(TotalSales,0) PctTotal, 'Phy' as Storetype
 	from (
 		select Company, Category, ItemId
@@ -104,17 +95,16 @@ Phy_BST as (
 	where CummulativeSales/nullif(TotalSales,0) <= 0.8
 	)
 
--- 5. 
+-- 5. Combine results into 1 table
 
-INSERT into Dim_BSTEcommPhy 
+
 SELECT  * FROM (
 select * from Ecomm_BST
 UNION ALL
 select * from Phy_BST) d
- 
+where Company = 'kat'
+AND Category = '20-BOOKS'
 
-
-End; 
 
 
 GO
