@@ -1,12 +1,13 @@
 USE [AxDW]
 GO
 
-/****** Object:  View [dbo].[View_DSR_TotalDiv]    Script Date: 05-May-2026 2:38:34 PM ******/
+/****** Object:  View [dbo].[View_DSR_TotalDiv]    Script Date: 07/05/2026 14:11:20 ******/
 SET ANSI_NULLS ON
 GO
 
 SET QUOTED_IDENTIFIER ON
 GO
+
 
 
 /*
@@ -64,7 +65,12 @@ WITH SalesCons_Virgin as (
 SalesCons_OtherLS as (
 	select b.BrandName, a.FinYear1, a.Month, a.Date, b.Country, b.Country_Code, b.Store_Code, b.BU,
 		b.Store_Name, b.Short_Name, '' Dept2, trim(a.Family) as Department, trim(a.SubFamily) as SubDepartment, 
-		'' Class, '' SubClass, 'L-1' as Level, 'LFL' LFLYN,
+		'' Class, '' SubClass, 
+		CASE
+			WHEN b.Store_Code = '20FTRLDC' THEN 'L-2'
+			ELSE 'L-1'
+		END Level, 
+		'LFL' LFLYN,
 		SUM(a.Qty) Qty, SUM(a.Sales$) Sales, SUM(Cost$) Cost, 0 as Claim, SUM(Margin$)  Margin
 	from View_SalesconsolOtherLS a
 	left join Dim_StoreName_TotalDiv b

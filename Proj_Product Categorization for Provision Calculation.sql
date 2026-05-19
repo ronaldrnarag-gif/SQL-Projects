@@ -1,6 +1,5 @@
 
 
-
 /*					
 Purpose     :   FIFO Stock Bucketing and Provisioning.
                 This file is needed to fulfill Weekly FIFO Report Requested by Karima and Team.
@@ -56,10 +55,10 @@ select a.Company, a.Sku, a.Description,	a.Dept2,	a.Department,	a.Subdepartment,	
     a.Stockbracketdescription, a.Stockbracket,					
 	sum(a.total_stk_qty) QtyOH, sum(a.total_stk$)	Stock, sum(a.Total_Prov$) Provision,			
     case					
-        when Dept2 = 'Lifestyle' then '1 - LIFESTYLE Categories'					
+        when Dept2 = 'Lifestyle' and department <> 'books' then '1 - LIFESTYLE Categories'					
         when Department = 'music' and SubDepartment in ('VINYL','CDS','CASSETTES','DVD/BLU-RAY') 					
             then '2 A- MUSIC (Main Categories)'					
-        when Dept2 = 'Culture' and SubDepartment not in ('VINYL','CDS','CASSETTES','DVD/BLU-RAY') 					
+        when Department in ('music','books') and SubDepartment not in ('VINYL','CDS','CASSETTES','DVD/BLU-RAY') 					
             then '2 B- MUSIC (Other Music+Books)'					
         when Dept2 = 'Tech' and SubClass in (select [SubClass Exclusions] from @exclusions)					
             then '3 - TECH (HARDWARE Categories)'					
@@ -80,5 +79,3 @@ group by a.Company, a.Sku, a.Description,	a.Dept2,	a.Department,	a.Subdepartment
 Select * from #DataExtract					
 					
 go	
-
-
