@@ -18,7 +18,7 @@ Stakeholder : Internal Control
 Created     : ronaldn/20260814
 */
 
--- DROP VIEW if exists vw_fnl_repurchasereport 
+ --DROP VIEW if exists vw_fnl_repurchasereport 
 
 CREATE View vw_fnl_repurchasereport as
 
@@ -31,7 +31,8 @@ with purchase_agg as (
         left join dimproduct b			
                 on a.productkey=b.productkey and upper(a.companyid)=upper(b.companyid)	
         left join dimvendor c
-                on a.apntprimaryvendorid_it = c.vendorid
+                on upper(a.companyid)=upper(c.companyid)
+                and a.apntprimaryvendorid_it = c.vendorid
         left join dimexchangeratedwh d
                 on upper(a.companyid) = upper(d.companyid)
         where a.date between '2026-02-01' and getdate()-1			
@@ -48,7 +49,8 @@ returns_agg as (
         left join dimproduct b			
                 on a.productkey=b.productkey and upper(a.companyid)=upper(b.companyid)	
         left join dimvendor c
-                on a.apntprimaryvendorid_it = c.vendorid
+                on upper(a.companyid)=upper(c.companyid)
+                and a.apntprimaryvendorid_it = c.vendorid
         left join dimexchangeratedwh d
                 on upper(a.companyid) = upper(d.companyid)
         where a.date between '2026-02-01' and getdate()-1			
