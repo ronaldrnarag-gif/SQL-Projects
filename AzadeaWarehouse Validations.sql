@@ -15,3 +15,4 @@ left join dimproduct b
 left join dimstore c
 	on a.storekey=c.storekey
 
+select top 10 * from factpurchase
