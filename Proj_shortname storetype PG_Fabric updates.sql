@@ -1,27 +1,10 @@
+
 USE AzadeaWarehouse
+USE Lakehouse_Curated
 
 shortname					= dimstore
 storetype					= dimstore
 productlifecyclestateid		= dimproduct
-
----------
-
-select max(date) from factsalesnew
-
-select distinct purchstatus from factpurchaseorder
-
-select top 10 * from dimproduct
-
-select * from sys.objects 
-where type_desc not in ('INTERNAL_TABLE','SERVICE_QUEUE','SYSTEM_TABLE')
-order by type_desc
-
-----------
-
-select top 10 * from factscrdwh
-
-select distinct ltshortname from factsalestransactioncountnew
-
 
 ---------------------
 
@@ -30,17 +13,12 @@ select distinct ltshortname from factsalestransactioncountnew
 
 	select top 10 * from fact_inventory_with_provision_aging
 
-
-
-	---------
-
+	
 	alter table fact_inventory_with_provision_aging
 	drop column popgradeno
 
 	alter table fact_inventory_with_provision_aging
 	add popgradeno varchar(50)
-
-	---------
 
 	update a
 	set 
@@ -57,17 +35,72 @@ select distinct ltshortname from factsalestransactioncountnew
 
 -- 2- factsalesnew
 	
+	select top 10 * from factsalesnew
 
+	
+	alter table factsalesnew
+	drop column storeshortname
 
+	alter table factsalesnew
+	add storeshortname varchar(20)
+
+	update a
+	set 
+		a.storeshortname	= b.shortname,
+		a.storetype			= b.storetype
+	from factsalesnew a
+	left join dimstore b
+		on a.warehouseid=b.warehouseid
+	left join dimproduct c
+		on upper(a.company)=upper(c.companyid)
+		and a.productkey=c.productkey
 
 
 -- 3- factsalestransactioncountnew
 
-USE AzadeaWarehouse
-USE Lakehouse_Curated
-
-select top 10 * from salestable
-select * from sys.objects
+	select top 10 * from factsalestransactioncountnew
 
 
-select top 10 * from factsalestransactioncountnew where warehouseid = '444'
+	update a
+	set 
+		a.ltshortname		= b.shortname,
+		a.storetype			= b.storetype
+	from factsalestransactioncountnew a
+	left join dimstore b
+		on a.warehouseid=b.warehouseid
+	left join dimproduct c
+		on upper(a.companyid)=upper(c.companyid)
+		and a.productkey=c.productkey
+
+
+
+
+-- 3- factsalesotherls
+-- add storename and storetype
+
+
+
+		select top 10 * 
+		from factsalesotherls a
+	
+	alter table factsalesotherls
+	drop column storetype
+
+	alter table factsalesotherls
+	add storetype varchar(20)
+
+	alter table factsalesotherls
+	drop column storename
+
+	alter table factsalesotherls
+	add storename varchar(50)
+
+		update a
+		set a.storename=b.storename,
+			a.storetype=b.storetype
+		from factsalesotherls a
+		left join dimstoretotaldiv b
+			on LTRIM(a.warehouseid)=LTRIM(b.bu)
+
+
+
